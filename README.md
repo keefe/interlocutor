@@ -25,6 +25,7 @@ export JAVA_HOME=$(/usr/libexec/java_home)
 Web Interface                 http://127.0.0.1:4040                                                                                                                    
 Forwarding                    http://70e3-2600-1009-b1e6-a22f-a0b4-7cfc-6d81.ngrok.io -> http://localhost:3000                                                    
 Forwarding                    https://70e3-2600-1009-b1e6-a22f-a0b4-7cfc-6d81.ngrok.io -> http://localhost:3000         
+Unless you want to sign up for a paid plan, request URLs must be updated to the new UUID every time ngrok is started
 
 6. run eclipse from the command line to get env variables e.g. 
 open /Users/kroeders//eclipse/java-2021-12/Eclipse.app

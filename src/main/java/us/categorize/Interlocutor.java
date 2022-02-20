@@ -26,7 +26,7 @@ public class Interlocutor
         	  var appHomeView = view(view -> view
         	    .type("home")
         	    .blocks(asBlocks(
-        	      section(section -> section.text(markdownText(mt -> mt.text("*This is running in eclipse :tada:")))),
+        	      section(section -> section.text(markdownText(mt -> mt.text("*This is running in eclipse :tada: Change Check")))),
         	      divider(),
         	      section(section -> section.text(markdownText(mt -> mt.text("This button won't do much for now but you can set up a listener for it using the `actions()` method and passing its unique `action_id`. See an example on <https://slack.dev/java-slack-sdk/guides/interactive-components|slack.dev/java-slack-sdk>.")))),
         	      actions(actions -> actions
@@ -44,6 +44,15 @@ public class Interlocutor
 
         	  return ctx.ack();
         	});
+        
+        app.command("/echo", (req, ctx) -> {
+        	  String commandArgText = req.getPayload().getText();
+        	  String channelId = req.getPayload().getChannelId();
+        	  String channelName = req.getPayload().getChannelName();
+        	  String text = "You said " + commandArgText + " at <#" + channelId + "|" + channelName + ">";
+        	  return ctx.ack(text); // respond with 200 OK
+        	});
+        
         for(String key : System.getenv().keySet()) {
         	System.out.println(key + ","+System.getenv(key));
         }
