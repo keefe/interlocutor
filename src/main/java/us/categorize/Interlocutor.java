@@ -9,9 +9,20 @@ import static com.slack.api.model.block.composition.BlockCompositions.plainText;
 import static com.slack.api.model.block.element.BlockElements.asElements;
 import static com.slack.api.model.block.element.BlockElements.button;
 import static com.slack.api.model.view.Views.view;
+import static java.util.Collections.emptyList;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+
+import org.slf4j.LoggerFactory;
+
+import com.slack.api.Slack;
 import com.slack.api.bolt.App;
 import com.slack.api.bolt.jetty.SlackAppServer;
+import com.slack.api.methods.SlackApiException;
+import com.slack.api.model.Conversation;
+import com.slack.api.model.Message;
 import com.slack.api.model.event.AppHomeOpenedEvent;
 /**
  * Hello world!
@@ -31,7 +42,7 @@ public class Interlocutor
         	      section(section -> section.text(markdownText(mt -> mt.text("This button won't do much for now but you can set up a listener for it using the `actions()` method and passing its unique `action_id`. See an example on <https://slack.dev/java-slack-sdk/guides/interactive-components|slack.dev/java-slack-sdk>.")))),
         	      actions(actions -> actions
         	        .elements(asElements(
-        	          button(b -> b.text(plainText(pt -> pt.text("Click me!"))).value("button1").actionId("button_1"))
+        	          button(b -> b.text(plainText(pt -> pt.text("Click!"))).value("button1").actionId("button_1"))
         	        ))
         	      )
         	    ))
@@ -49,14 +60,81 @@ public class Interlocutor
         	  String commandArgText = req.getPayload().getText();
         	  String channelId = req.getPayload().getChannelId();
         	  String channelName = req.getPayload().getChannelName();
-        	  String text = "You said " + commandArgText + " at <#" + channelId + "|" + channelName + ">";
+        	  String text = "Test said " + commandArgText + " at <#" + channelId + "|" + channelName + "> API thinks it is " + findConversation(channelName);
+        	  List<Message> messages = fetchHistory(findConversation(channelName));
+        	  for(Message m : messages) {
+        		  System.out.println(m.getText());
+        	  }
         	  return ctx.ack(text); // respond with 200 OK
         	});
+
+        app.command("/advise", (req, ctx) -> {
+      	  List<Message> messages = fetchHistory(findConversation(req.getPayload().getChannelName()));
+      	  for(Message m : messages) {
+      		  System.out.println(m.getText());
+      	  }
+      	  return ctx.ack("Advice will go here"); // respond with 200 OK
+      	});        
         
         for(String key : System.getenv().keySet()) {
         	System.out.println(key + ","+System.getenv(key));
         }
         var server = new SlackAppServer(app);
         server.start();
+    }
+    
+    /**
+     * Find conversation ID using the conversations.list method
+     */
+    static String findConversation(String name) {
+        // you can get this instance via ctx.client() in a Bolt app
+        var client = Slack.getInstance().methods();
+        var logger = LoggerFactory.getLogger("my-awesome-slack-app");
+        try {
+            // Call the conversations.list method using the built-in WebClient
+            var result = client.conversationsList(r -> r
+                // The token you used to initialize your app
+                .token(System.getenv("SLACK_BOT_TOKEN"))
+            );
+            for (Conversation channel : result.getChannels()) {
+                if (channel.getName().equals(name)) {
+                    var conversationId = channel.getId();
+                    // Print result
+                    logger.info("Found conversation ID: {}", conversationId);
+                    // Break from for loop
+                    return conversationId;
+                }
+            }
+        } catch (IOException | SlackApiException e) {
+            logger.error("error: {}", e.getMessage(), e);
+        }
+        return null;
+    }
+    
+    /**
+     * Fetch conversation history using ID from last example
+     */
+    static List<Message> fetchHistory(String id) {
+    	Optional<List<Message>> conversationHistory = Optional.empty();
+        // you can get this instance via ctx.client() in a Bolt app
+        var client = Slack.getInstance().methods();
+        var logger = LoggerFactory.getLogger("my-awesome-slack-app");
+        try {
+            // Call the conversations.history method using the built-in WebClient
+            var result = client.conversationsHistory(r -> r
+                // The token you used to initialize your app
+                .token(System.getenv("SLACK_BOT_TOKEN"))
+                .channel(id)
+            );
+            conversationHistory = Optional.ofNullable(result.getMessages());
+            // Print results
+            logger.info("{} messages found in {}", conversationHistory.orElse(emptyList()).size(), id);
+            //why isn't logger working?
+            
+        } catch (IOException | SlackApiException e) {
+            logger.error("error: {}", e.getMessage(), e);
+        }
+        
+        return conversationHistory.orElse(emptyList());
     }
 }
