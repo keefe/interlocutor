@@ -17,6 +17,12 @@ import java.util.Optional;
 
 import org.slf4j.LoggerFactory;
 
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.services.comprehend.AmazonComprehend;
+import com.amazonaws.services.comprehend.AmazonComprehendClientBuilder;
+import com.amazonaws.services.comprehend.model.DetectSentimentRequest;
+import com.amazonaws.services.comprehend.model.DetectSentimentResult;
 import com.slack.api.Slack;
 import com.slack.api.bolt.App;
 import com.slack.api.bolt.jetty.SlackAppServer;
@@ -68,12 +74,32 @@ public class Interlocutor
         	  return ctx.ack(text); // respond with 200 OK
         	});
 
+        
         app.command("/advise", (req, ctx) -> {
       	  List<Message> messages = fetchHistory(findConversation(req.getPayload().getChannelName()));
+      	  StringBuilder text = new StringBuilder();
       	  for(Message m : messages) {
       		  System.out.println(m.getText());
+      		  text.append(m.getText() + "\n");
       	  }
-      	  return ctx.ack("Advice will go here"); // respond with 200 OK
+          // Create credentials using a provider chain. For more information, see
+          // https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html
+          AWSCredentialsProvider awsCreds = DefaultAWSCredentialsProviderChain.getInstance();
+          final AmazonComprehend comprehendClient =
+              AmazonComprehendClientBuilder.standard()
+                                           .withCredentials(awsCreds)
+                                           .withRegion("us-east-2")
+                                           .build();
+          System.out.println("Calling DetectSentiment");
+          DetectSentimentRequest detectSentimentRequest = new DetectSentimentRequest().withText(text.toString())
+                                                                                      .withLanguageCode("en");
+          DetectSentimentResult detectSentimentResult = comprehendClient.detectSentiment(detectSentimentRequest);
+          System.out.println(detectSentimentResult);
+          System.out.println("End of DetectSentiment\n");
+          System.out.println( "Done" );
+          // Call detectSentiment API
+
+      	  return ctx.ack("General Sentiment " + detectSentimentResult.getSentiment()); // respond with 200 OK
       	});        
         
         for(String key : System.getenv().keySet()) {
