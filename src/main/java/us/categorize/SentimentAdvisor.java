@@ -30,11 +30,14 @@ import com.slack.api.methods.SlackApiException;
 import com.slack.api.model.Conversation;
 import com.slack.api.model.Message;
 import com.slack.api.model.event.AppHomeOpenedEvent;
+
+import us.categorize.conversation.slack.SlackMessage;
+import us.categorize.model.simple.SimpleConversation;
 /**
  * Hello world!
  *
  */
-public class Interlocutor 
+public class SentimentAdvisor 
 {
     public static void main( String[] args ) throws Exception
     {
@@ -75,36 +78,34 @@ public class Interlocutor
         	});
 
         
+        
         app.command("/advise", (req, ctx) -> {
       	  List<Message> messages = fetchHistory(findConversation(req.getPayload().getChannelName()));
+          us.categorize.model.Conversation conversation = new SimpleConversation();
       	  StringBuilder text = new StringBuilder();
+      	  int length = 0;
       	  for(Message m : messages) {
       		  System.out.println(m.getText());
+      		  conversation.listen(new SlackMessage(m));
       		  text.append(m.getText() + "\n");
+      		  length += m.getText().length();
       	  }
+      	  System.out.println("Total chars " + length + " total units " + (length / 300.0) + " cost " + 0.0001*Math.max(length / 300.0,3.0));
           // Create credentials using a provider chain. For more information, see
           // https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html
           AWSCredentialsProvider awsCreds = DefaultAWSCredentialsProviderChain.getInstance();
           final AmazonComprehend comprehendClient =
               AmazonComprehendClientBuilder.standard()
                                            .withCredentials(awsCreds)
-                                           .withRegion("us-east-2")
                                            .build();
-          System.out.println("Calling DetectSentiment");
           DetectSentimentRequest detectSentimentRequest = new DetectSentimentRequest().withText(text.toString())
                                                                                       .withLanguageCode("en");
           DetectSentimentResult detectSentimentResult = comprehendClient.detectSentiment(detectSentimentRequest);
           System.out.println(detectSentimentResult);
-          System.out.println("End of DetectSentiment\n");
-          System.out.println( "Done" );
-          // Call detectSentiment API
 
       	  return ctx.ack("General Sentiment " + detectSentimentResult.getSentiment()); // respond with 200 OK
-      	});        
+      	});
         
-        for(String key : System.getenv().keySet()) {
-        	System.out.println(key + ","+System.getenv(key));
-        }
         var server = new SlackAppServer(app);
         server.start();
     }
