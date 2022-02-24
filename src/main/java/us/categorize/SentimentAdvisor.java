@@ -12,17 +12,13 @@ import static com.slack.api.model.view.Views.view;
 import static java.util.Collections.emptyList;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.LoggerFactory;
 
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.services.comprehend.AmazonComprehend;
-import com.amazonaws.services.comprehend.AmazonComprehendClientBuilder;
-import com.amazonaws.services.comprehend.model.DetectSentimentRequest;
-import com.amazonaws.services.comprehend.model.DetectSentimentResult;
 import com.slack.api.Slack;
 import com.slack.api.bolt.App;
 import com.slack.api.bolt.jetty.SlackAppServer;
@@ -39,14 +35,63 @@ import us.categorize.model.simple.SimpleConversation;
 
 public class SentimentAdvisor 
 {
+	
+	private  us.categorize.model.Conversation currentConversation;
+	
+	private Map<us.categorize.model.Conversation, SentimentAdvice> conversationAdvice;
+	
+	private Advisor sentimentAdvisor;
+	
+	private static final int CONVERSATION_DELTA = 60*10;//seconds to make it a new convo
+	
+	private static final SentimentAdvice noopAdvice = new SentimentAdvice() {
 		
+		@Override
+		public String getSentiment() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+		
+		@Override
+		public double getPositive() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+		
+		@Override
+		public double getNeutral() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+		
+		@Override
+		public double getNegative() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+		
+		@Override
+		public double getMixed() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+	};
+	
 	public SentimentAdvisor()
 	{
+		currentConversation = new SimpleConversation();
+		conversationAdvice = new HashMap<>();
+		sentimentAdvisor = new ComprehendAdvisor();
 	}
 	
 	
     public static void main( String[] args ) throws Exception
     {
+    	SentimentAdvisor sentimenetAdvisor = new SentimentAdvisor();
+    	sentimenetAdvisor.listenToSlack();
+    }
+    
+    public void listenToSlack() throws Exception {
         var app = new App();
         app.event(AppHomeOpenedEvent.class, (payload, ctx) -> {
         	  var appHomeView = view(view -> view
@@ -86,26 +131,63 @@ public class SentimentAdvisor
         
         
         app.command("/advise", (req, ctx) -> {
-      	  List<Message> messages = fetchHistory(findConversation(req.getPayload().getChannelName()));
-          us.categorize.model.Conversation conversation = new SimpleConversation();
-      	  for(Message m : messages) {
-      		  conversation.listen(new SlackMessage(m));
-      	  }
-      	  Advisor sentimentAdvisor = new ComprehendAdvisor();
+          //needs to break it down into channel or this will mix stuff up
+    	  currentConversation = new SimpleConversation();
+		  conversationAdvice = new HashMap<>();
 
-      	  SentimentAdvice advice = (SentimentAdvice) sentimentAdvisor.advise(conversation);
+      	  List<Message> messages = fetchHistory(findConversation(req.getPayload().getChannelName()));
+      	  for(Message m : messages) {
+      		addMessage(m);
+      	  }
+      	  SentimentAdvice advice = findAdvice();
       	  
       	  return ctx.ack("General Sentiment " + advice.getSentiment()); // respond with 200 OK
       	});
         
         var server = new SlackAppServer(app);
-        server.start();
+        server.start();    	
+    }
+    
+    
+    private SentimentAdvice findAdvice() {
+    	us.categorize.model.Conversation advisedConversation = currentConversation;
+    	for(us.categorize.model.Conversation conversation : conversationAdvice.keySet()) {
+    		if(advisedConversation == null) advisedConversation = conversation; //won't happen as written but for convenience
+    		else {
+    			us.categorize.model.Message currentLatest = advisedConversation.latest();
+    			us.categorize.model.Message checkLatest = conversation.latest();
+    			if(currentLatest == null || checkLatest.getTimestampSeconds() > currentLatest.getTimestampSeconds()) {
+    				advisedConversation = conversation;
+    			}
+    		}
+    	}
+    	if(conversationAdvice.containsKey(advisedConversation) && conversationAdvice.get(advisedConversation) != noopAdvice) {
+    		return conversationAdvice.get(advisedConversation);
+    	}
+    	SentimentAdvice advice = (SentimentAdvice) sentimentAdvisor.advise(advisedConversation);
+    	if(advisedConversation!=currentConversation)
+    		conversationAdvice.put(advisedConversation, advice);
+    	return advice;
+    }
+    
+    private void addMessage(Message message) {
+    	SlackMessage newMessage = new SlackMessage(message);
+    	us.categorize.model.Message lastKnown = currentConversation.latest();
+    	
+    	//this assumes we are getting messages in order and don't need to iterate through past conversations to find the place of a new message
+    	//this may or may not be true of threaded messages
+    	//and certainly depends on ordering, in slack case we get them in reverse chrono so this value should always be negative
+    	if(lastKnown != null && Math.abs(newMessage.getTimestampSeconds() - lastKnown.getTimestampSeconds()) > CONVERSATION_DELTA) {
+    		conversationAdvice.put(currentConversation, noopAdvice);
+    		currentConversation = new SimpleConversation();
+    	}
+    	currentConversation.listen(newMessage);
     }
     
     /**
      * Find conversation ID using the conversations.list method
      */
-    static String findConversation(String name) {
+    private String findConversation(String name) {
         // you can get this instance via ctx.client() in a Bolt app
         var client = Slack.getInstance().methods();
         var logger = LoggerFactory.getLogger("my-awesome-slack-app");
@@ -133,7 +215,7 @@ public class SentimentAdvisor
     /**
      * Fetch conversation history using ID from last example
      */
-    static List<Message> fetchHistory(String id) {
+    private List<Message> fetchHistory(String id) {
     	Optional<List<Message>> conversationHistory = Optional.empty();
         // you can get this instance via ctx.client() in a Bolt app
         var client = Slack.getInstance().methods();

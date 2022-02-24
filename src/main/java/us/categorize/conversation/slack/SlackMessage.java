@@ -6,14 +6,16 @@ import us.categorize.model.simple.SimpleUser;
 
 public class SlackMessage implements Message {
 
-	private com.slack.api.model.Message slackMessage;
-	private SimpleUser user;
+	private final com.slack.api.model.Message slackMessage;
+	private final SimpleUser user;
+	private final long secondsTS;
 	
 	public SlackMessage(com.slack.api.model.Message slackMessage) {
 		this.slackMessage = slackMessage;
 		user = new SimpleUser();
 		user.setId(slackMessage.getUser());
 		user.setName(slackMessage.getUsername());
+		secondsTS = (long) Double.parseDouble(slackMessage.getTs());
 	}
 	
 	@Override
@@ -29,6 +31,11 @@ public class SlackMessage implements Message {
 	@Override
 	public User getUser() {
 		return user;
+	}
+
+	@Override
+	public long getTimestampSeconds() {
+		return secondsTS;
 	}
 
 }

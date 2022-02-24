@@ -5,4 +5,5 @@ public interface Message {
 	String getId();
 	String getText();
 	User getUser();
+	long getTimestampSeconds();
 }
