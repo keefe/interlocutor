@@ -49,7 +49,7 @@ public class SentimentAdvisor
 		@Override
 		public String getSentiment() {
 			// TODO Auto-generated method stub
-			return null;
+			return "DEFAULT : No Analysis Performed";
 		}
 		
 		@Override
@@ -139,6 +139,16 @@ public class SentimentAdvisor
       	  for(Message m : messages) {
       		addMessage(m);
       	  }
+      	  if("all".equals(req.getPayload().getText())) {
+      		  for(us.categorize.model.Conversation c : conversationAdvice.keySet()) {
+      			  SentimentAdvice advice = conversationAdvice.get(c);
+      			  if(advice == null || advice == noopAdvice) {
+      				  advice = (SentimentAdvice) sentimentAdvisor.advise(c);
+      				  conversationAdvice.put(c, advice);
+      			  }
+      		  }
+      	  }
+      		  
       	  SentimentAdvice advice = findAdvice();
       	  
       	  return ctx.ack("General Sentiment " + advice.getSentiment()); // respond with 200 OK
@@ -156,6 +166,9 @@ public class SentimentAdvisor
     		else {
     			us.categorize.model.Message currentLatest = advisedConversation.latest();
     			us.categorize.model.Message checkLatest = conversation.latest();
+    			//a sliding window approach here could be useful, but expensive
+    			//should this stuff be moved into conversation, break this conversation down by time?
+    			//or should we have a channel class?
     			if(currentLatest == null || checkLatest.getTimestampSeconds() > currentLatest.getTimestampSeconds()) {
     				advisedConversation = conversation;
     			}
