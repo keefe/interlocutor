@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.slack.api.Slack;
@@ -43,7 +44,7 @@ public class SentimentAdvisor
 	private Advisor sentimentAdvisor;
 	
 	private static final int CONVERSATION_DELTA = 60*10;//seconds to make it a new convo
-	
+		
 	private static final SentimentAdvice noopAdvice = new SentimentAdvice() {
 		
 		@Override
@@ -153,9 +154,12 @@ public class SentimentAdvisor
       	  
       	  return ctx.ack("General Sentiment " + advice.getSentiment()); // respond with 200 OK
       	});
-        
+        System.out.println("before start");
         var server = new SlackAppServer(app);
-        server.start();    	
+        server.start();
+        System.out.println("After Start");
+        var logger = LoggerFactory.getLogger(SentimentAdvisor.class);
+        logger.info("Listening to Slack Workspace");
     }
     
     
@@ -203,7 +207,7 @@ public class SentimentAdvisor
     private String findConversation(String name) {
         // you can get this instance via ctx.client() in a Bolt app
         var client = Slack.getInstance().methods();
-        var logger = LoggerFactory.getLogger("my-awesome-slack-app");
+        var logger = LoggerFactory.getLogger(SentimentAdvisor.class);
         try {
             // Call the conversations.list method using the built-in WebClient
             var result = client.conversationsList(r -> r
@@ -229,10 +233,10 @@ public class SentimentAdvisor
      * Fetch conversation history using ID from last example
      */
     private List<Message> fetchHistory(String id) {
+    	var logger = LoggerFactory.getLogger(SentimentAdvisor.class);
     	Optional<List<Message>> conversationHistory = Optional.empty();
         // you can get this instance via ctx.client() in a Bolt app
         var client = Slack.getInstance().methods();
-        var logger = LoggerFactory.getLogger("my-awesome-slack-app");
         try {
             // Call the conversations.history method using the built-in WebClient
             var result = client.conversationsHistory(r -> r
