@@ -36,7 +36,6 @@ import us.categorize.model.simple.SimpleConversation;
 
 public class SentimentAdvisor 
 {
-	
 	private  us.categorize.model.Conversation currentConversation;
 	
 	private Map<us.categorize.model.Conversation, SentimentAdvice> conversationAdvice;
@@ -44,40 +43,7 @@ public class SentimentAdvisor
 	private Advisor sentimentAdvisor;
 	
 	private static final int CONVERSATION_DELTA = 60*10;//seconds to make it a new convo
-		
-	private static final SentimentAdvice noopAdvice = new SentimentAdvice() {
-		
-		@Override
-		public String getSentiment() {
-			// TODO Auto-generated method stub
-			return "DEFAULT : No Analysis Performed";
-		}
-		
-		@Override
-		public double getPositive() {
-			// TODO Auto-generated method stub
-			return 0;
-		}
-		
-		@Override
-		public double getNeutral() {
-			// TODO Auto-generated method stub
-			return 0;
-		}
-		
-		@Override
-		public double getNegative() {
-			// TODO Auto-generated method stub
-			return 0;
-		}
-		
-		@Override
-		public double getMixed() {
-			// TODO Auto-generated method stub
-			return 0;
-		}
-	};
-	
+			
 	public SentimentAdvisor()
 	{
 		currentConversation = new SimpleConversation();
@@ -143,8 +109,8 @@ public class SentimentAdvisor
       	  if("all".equals(req.getPayload().getText())) {
       		  for(us.categorize.model.Conversation c : conversationAdvice.keySet()) {
       			  SentimentAdvice advice = conversationAdvice.get(c);
-      			  if(advice == null || advice == noopAdvice) {
-      				  advice = (SentimentAdvice) sentimentAdvisor.advise(c);
+      			  if(advice == null || advice == SentimentAdvice.noopAdvice) {
+      				  advice = sentimentAdvisor.detectSentiment(c);
       				  conversationAdvice.put(c, advice);
       			  }
       		  }
@@ -178,10 +144,10 @@ public class SentimentAdvisor
     			}
     		}
     	}
-    	if(conversationAdvice.containsKey(advisedConversation) && conversationAdvice.get(advisedConversation) != noopAdvice) {
+    	if(conversationAdvice.containsKey(advisedConversation) && conversationAdvice.get(advisedConversation) != SentimentAdvice.noopAdvice) {
     		return conversationAdvice.get(advisedConversation);
     	}
-    	SentimentAdvice advice = (SentimentAdvice) sentimentAdvisor.advise(advisedConversation);
+    	SentimentAdvice advice = sentimentAdvisor.detectSentiment(advisedConversation);
     	if(advisedConversation!=currentConversation)
     		conversationAdvice.put(advisedConversation, advice);
     	return advice;
@@ -195,7 +161,7 @@ public class SentimentAdvisor
     	//this may or may not be true of threaded messages
     	//and certainly depends on ordering, in slack case we get them in reverse chrono so this value should always be negative
     	if(lastKnown != null && Math.abs(newMessage.getTimestampSeconds() - lastKnown.getTimestampSeconds()) > CONVERSATION_DELTA) {
-    		conversationAdvice.put(currentConversation, noopAdvice);
+    		conversationAdvice.put(currentConversation, SentimentAdvice.noopAdvice);
     		currentConversation = new SimpleConversation();
     	}
     	currentConversation.listen(newMessage);

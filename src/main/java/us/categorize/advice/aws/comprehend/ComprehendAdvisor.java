@@ -9,8 +9,9 @@ import com.amazonaws.services.comprehend.model.DetectKeyPhrasesResult;
 import com.amazonaws.services.comprehend.model.DetectSentimentRequest;
 import com.amazonaws.services.comprehend.model.DetectSentimentResult;
 
-import us.categorize.advice.Advice;
 import us.categorize.advice.Advisor;
+import us.categorize.advice.KeyphraseAdvice;
+import us.categorize.advice.SentimentAdvice;
 import us.categorize.model.Conversation;
 import us.categorize.model.Message;
 
@@ -31,7 +32,7 @@ public class ComprehendAdvisor implements Advisor {
 	}
 	
 	@Override
-	public Advice advise(Conversation conversation) {
+	public SentimentAdvice detectSentiment(Conversation conversation) {
     	StringBuilder text = new StringBuilder();
     	int length = 0;
     	for(Message message : conversation.content()) {
@@ -44,12 +45,28 @@ public class ComprehendAdvisor implements Advisor {
 		DetectSentimentResult detectSentimentResult = comprehendClient.detectSentiment(detectSentimentRequest);
 		System.out.println(detectSentimentResult);
 
+
+		return new ComprehendSentimentAdvice(detectSentimentResult);
+	}
+
+	@Override
+	public KeyphraseAdvice detectKeyphrases(Conversation conversation) {
+
+    	StringBuilder text = new StringBuilder();
+    	int length = 0;
+    	for(Message message : conversation.content()) {
+    		text.append(message.getText()+"\n");
+    		length += message.getText().length();
+    	}
+		
         DetectKeyPhrasesRequest detectKeyPhrasesRequest = new DetectKeyPhrasesRequest().withText(text.toString())
                 .withLanguageCode("en");
 		DetectKeyPhrasesResult detectKeyPhrasesResult = comprehendClient.detectKeyPhrases(detectKeyPhrasesRequest);
 		detectKeyPhrasesResult.getKeyPhrases().forEach(System.out::println);
 
-		return new ComprehendSentimentAdvice(detectSentimentResult);
+		
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
