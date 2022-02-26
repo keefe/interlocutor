@@ -156,10 +156,10 @@ public class SentimentAdvisor
       	});
         System.out.println("before start");
         var server = new SlackAppServer(app);
-        server.start();
-        System.out.println("After Start");
         var logger = LoggerFactory.getLogger(SentimentAdvisor.class);
-        logger.info("Listening to Slack Workspace");
+        logger.debug("Listening to Slack Workspace");
+
+        server.start();
     }
     
     
