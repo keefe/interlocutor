@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.slack.api.Slack;
@@ -27,6 +26,7 @@ import com.slack.api.methods.SlackApiException;
 import com.slack.api.model.Conversation;
 import com.slack.api.model.Message;
 import com.slack.api.model.event.AppHomeOpenedEvent;
+import com.slack.api.model.event.MessageEvent;
 
 import us.categorize.advice.Advisor;
 import us.categorize.advice.SentimentAdvice;
@@ -82,7 +82,11 @@ public class SentimentAdvisor
 
         	  return ctx.ack();
         	});
-        
+        app.event(MessageEvent.class, (payload, ctx) -> {
+          System.out.println(payload.getEvent().getText());
+      	  return ctx.ack();
+        	
+        });
         app.command("/echo", (req, ctx) -> {
         	  String commandArgText = req.getPayload().getText();
         	  String channelId = req.getPayload().getChannelId();
