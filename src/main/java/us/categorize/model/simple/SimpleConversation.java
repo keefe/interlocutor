@@ -11,7 +11,7 @@ public class SimpleConversation implements Conversation {
 	private final ArrayList<Message> messages = new ArrayList<Message>();
 
 	@Override
-	public boolean listen(Message message) {
+	public boolean add(Message message) {
 		if(messages.size()==0 || message.getTimestampSeconds() > messages.get(messages.size()-1).getTimestampSeconds()) {
 			messages.add(message);
 		} else {

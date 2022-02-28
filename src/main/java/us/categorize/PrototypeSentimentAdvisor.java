@@ -34,7 +34,7 @@ import us.categorize.advice.aws.comprehend.ComprehendAdvisor;
 import us.categorize.conversation.slack.SlackMessage;
 import us.categorize.model.simple.SimpleConversation;
 
-public class SentimentAdvisor 
+public class PrototypeSentimentAdvisor 
 {
 	private  us.categorize.model.Conversation currentConversation;
 	
@@ -44,7 +44,7 @@ public class SentimentAdvisor
 	
 	private static final int CONVERSATION_DELTA = 60*10;//seconds to make it a new convo
 			
-	public SentimentAdvisor()
+	public PrototypeSentimentAdvisor()
 	{
 		currentConversation = new SimpleConversation();
 		conversationAdvice = new HashMap<>();
@@ -54,7 +54,7 @@ public class SentimentAdvisor
 	
     public static void main( String[] args ) throws Exception
     {
-    	SentimentAdvisor sentimenetAdvisor = new SentimentAdvisor();
+    	PrototypeSentimentAdvisor sentimenetAdvisor = new PrototypeSentimentAdvisor();
     	sentimenetAdvisor.listenToSlack();
     }
     
@@ -66,7 +66,6 @@ public class SentimentAdvisor
         	    .blocks(asBlocks(
         	      section(section -> section.text(markdownText(mt -> mt.text("*This is running in eclipse :tada: Change Check")))),
         	      divider(),
-        	      section(section -> section.text(markdownText(mt -> mt.text("This button won't do much for now but you can set up a listener for it using the `actions()` method and passing its unique `action_id`. See an example on <https://slack.dev/java-slack-sdk/guides/interactive-components|slack.dev/java-slack-sdk>.")))),
         	      actions(actions -> actions
         	        .elements(asElements(
         	          button(b -> b.text(plainText(pt -> pt.text("Click!"))).value("button1").actionId("button_1"))
@@ -84,8 +83,7 @@ public class SentimentAdvisor
         	});
         app.event(MessageEvent.class, (payload, ctx) -> {
           System.out.println(payload.getEvent().getText());
-      	  return ctx.ack();
-        	
+      	  return ctx.ack();        	
         });
         app.command("/echo", (req, ctx) -> {
         	  String commandArgText = req.getPayload().getText();
@@ -126,7 +124,7 @@ public class SentimentAdvisor
       	});
         System.out.println("before start");
         var server = new SlackAppServer(app);
-        var logger = LoggerFactory.getLogger(SentimentAdvisor.class);
+        var logger = LoggerFactory.getLogger(PrototypeSentimentAdvisor.class);
         logger.debug("Listening to Slack Workspace");
 
         server.start();
@@ -168,7 +166,7 @@ public class SentimentAdvisor
     		conversationAdvice.put(currentConversation, SentimentAdvice.noopAdvice);
     		currentConversation = new SimpleConversation();
     	}
-    	currentConversation.listen(newMessage);
+    	currentConversation.add(newMessage);
     }
     
     /**
@@ -177,7 +175,7 @@ public class SentimentAdvisor
     private String findConversation(String name) {
         // you can get this instance via ctx.client() in a Bolt app
         var client = Slack.getInstance().methods();
-        var logger = LoggerFactory.getLogger(SentimentAdvisor.class);
+        var logger = LoggerFactory.getLogger(PrototypeSentimentAdvisor.class);
         try {
             // Call the conversations.list method using the built-in WebClient
             var result = client.conversationsList(r -> r
@@ -203,7 +201,7 @@ public class SentimentAdvisor
      * Fetch conversation history using ID from last example
      */
     private List<Message> fetchHistory(String id) {
-    	var logger = LoggerFactory.getLogger(SentimentAdvisor.class);
+    	var logger = LoggerFactory.getLogger(PrototypeSentimentAdvisor.class);
     	Optional<List<Message>> conversationHistory = Optional.empty();
         // you can get this instance via ctx.client() in a Bolt app
         var client = Slack.getInstance().methods();
