@@ -194,12 +194,22 @@ public class RedditTestClient {
 		System.out.println(response.getContentAsString());
 		AuthResult result = mapper.readValue(response.getContentAsString(), AuthResult.class);
 
+		ContentResponse apost = httpClient.newRequest("https://oauth.reddit.com/r/javascript/comments/t5pmvj/angry_probably_chinese_dickheads_are_spamming/hz7jdou/")
+				.method(HttpMethod.GET).header("Authorization", "bearer " + result.getAccess_token())
+				.agent("EmotionalJaguar13 - categorize.us interlocutor").send();
+		System.out.println(apost.getContentAsString());
+		
 		ContentResponse posts = httpClient.newRequest("https://oauth.reddit.com/r/javascript/hot.json")
 				.method(HttpMethod.GET).header("Authorization", "bearer " + result.getAccess_token())
 				.agent("EmotionalJaguar13 - categorize.us interlocutor").send();
 		System.out.println(posts.getStatus());
-		System.out.println(posts.getContentAsString());
 		Listing listing = mapper.readValue(posts.getContentAsString(), Listing.class);
+		for(var wrapper : listing.getData().getChildren())
+		{
+			var item = wrapper.getData();
+			
+		}
+
 		// Stop HttpClient.
 		httpClient.stop();
 	}
