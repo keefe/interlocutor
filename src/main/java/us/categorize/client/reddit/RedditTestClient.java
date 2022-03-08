@@ -59,6 +59,16 @@ class Listing {
 
 	private ListingData data;
 
+	public Listing()
+	{
+		
+	}
+	
+	public Listing(String derp)
+	{
+		//sometimes '' is passed instead of {}
+	}
+	
 	public ListingData getData() {
 		return data;
 	}
@@ -80,9 +90,21 @@ class Listing {
 class ListingData {
 	private String kind;
 	private String after;
+	private String id;
 
 	private List<ListingItemWrapper> children;
 
+	
+	public ListingData()
+	{
+		
+	}
+	public ListingData(String what)
+	{
+		//th
+	}
+
+	
 	public String getAfter() {
 		return after;
 	}
@@ -106,12 +128,30 @@ class ListingData {
 	public void setKind(String kind) {
 		this.kind = kind;
 	}
+	public String getId() {
+		return id;
+	}
+	public void setId(String id) {
+		this.id = id;
+	}
 
 }
 @JsonIgnoreProperties(ignoreUnknown = true)
 class ListingItemWrapper {
 	private String kind;
 	private ListingItem data;
+	private String id;
+	
+	public ListingItemWrapper()
+	{
+		
+	}
+	
+	public ListingItemWrapper(String derp)
+	{
+		//this is because, instead of {} we get '' sometimes
+	}
+	
 	public String getKind() {
 		return kind;
 	}
@@ -124,10 +164,26 @@ class ListingItemWrapper {
 	public void setData(ListingItem data) {
 		this.data = data;
 	}
+	public String getId() {
+		return id;
+	}
+	public void setId(String id) {
+		this.id = id;
+	}
 }
 @JsonIgnoreProperties(ignoreUnknown = true)
 class ListingItem {
-	private String selftext, url, permalink, title, name;
+	private String selftext, url, permalink, title, name, body, author, id;
+	private Listing replies; 
+	private long created;
+	
+	public Listing getReplies() {
+		return replies;
+	}
+
+	public void setReplies(Listing replies) {
+		this.replies = replies;
+	}
 
 	public String getName() {
 		return name;
@@ -168,6 +224,38 @@ class ListingItem {
 	public void setUrl(String url) {
 		this.url = url;
 	}
+
+	public String getBody() {
+		return body;
+	}
+
+	public void setBody(String body) {
+		this.body = body;
+	}
+
+	public String getAuthor() {
+		return author;
+	}
+
+	public void setAuthor(String author) {
+		this.author = author;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public long getCreated() {
+		return created;
+	}
+
+	public void setCreated(long created) {
+		this.created = created;
+	}
 }
 
 public class RedditTestClient {
@@ -206,8 +294,10 @@ public class RedditTestClient {
 			ContentResponse apost = httpClient.newRequest("https://oauth.reddit.com" + item.getPermalink())
 					.method(HttpMethod.GET).header("Authorization", "bearer " + result.getAccess_token())
 					.agent("EmotionalJaguar13 - categorize.us interlocutor").send();
+			System.out.println("Read " + item.getPermalink());
+			Listing[] details = mapper.readValue(apost.getContentAsString(), Listing[].class);
 			System.out.println(apost.getContentAsString());
-			
+
 		}
 
 		// Stop HttpClient.
