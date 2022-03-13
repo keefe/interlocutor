@@ -3,7 +3,7 @@ package us.categorize.advice;
 import us.categorize.model.Conversation;
 
 public interface Advisor {
-	SentimentAdvice detectSentiment(Conversation conversation);
+	<C> SentimentAdvice detectSentiment(Conversation<C> conversation);
 	
-	KeyphraseAdvice detectKeyphrases(Conversation conversation);
+	<C> KeyphraseAdvice detectKeyphrases(Conversation<C> conversation);
 }

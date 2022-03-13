@@ -15,6 +15,7 @@ import us.categorize.advice.SentimentAdvice;
 import us.categorize.model.Conversation;
 import us.categorize.model.Message;
 
+//TODO generics here are wrong, need to sort that out
 public class ComprehendAdvisor implements Advisor {
 
 	private final AmazonComprehend comprehendClient;
@@ -32,7 +33,7 @@ public class ComprehendAdvisor implements Advisor {
 	}
 	
 	@Override
-	public SentimentAdvice detectSentiment(Conversation conversation) {
+	public <C> SentimentAdvice detectSentiment(Conversation<C> conversation) {
     	StringBuilder text = new StringBuilder();
     	int length = 0;
     	for(Message message : conversation.content()) {
@@ -50,7 +51,7 @@ public class ComprehendAdvisor implements Advisor {
 	}
 
 	@Override
-	public KeyphraseAdvice detectKeyphrases(Conversation conversation) {
+	public <C> KeyphraseAdvice detectKeyphrases(Conversation<C> conversation) {
 
     	StringBuilder text = new StringBuilder();
     	int length = 0;
@@ -65,7 +66,6 @@ public class ComprehendAdvisor implements Advisor {
 		detectKeyPhrasesResult.getKeyPhrases().forEach(System.out::println);
 
 		
-		// TODO Auto-generated method stub
 		return null;
 	}
 

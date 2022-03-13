@@ -46,7 +46,7 @@ public class PrototypeSentimentAdvisor
 			
 	public PrototypeSentimentAdvisor()
 	{
-		currentConversation = new SimpleConversation();
+		currentConversation = new SimpleConversation("temp");
 		conversationAdvice = new HashMap<>();
 		sentimentAdvisor = new ComprehendAdvisor();
 	}
@@ -100,8 +100,7 @@ public class PrototypeSentimentAdvisor
         
         
         app.command("/advise", (req, ctx) -> {
-          //needs to break it down into channel or this will mix stuff up
-    	  currentConversation = new SimpleConversation();
+    	  currentConversation = new SimpleConversation("temp");
 		  conversationAdvice = new HashMap<>();
 
       	  List<Message> messages = fetchHistory(findConversation(req.getPayload().getChannelName()));
@@ -164,7 +163,7 @@ public class PrototypeSentimentAdvisor
     	//and certainly depends on ordering, in slack case we get them in reverse chrono so this value should always be negative
     	if(lastKnown != null && Math.abs(newMessage.getTimestampSeconds() - lastKnown.getTimestampSeconds()) > CONVERSATION_DELTA) {
     		conversationAdvice.put(currentConversation, SentimentAdvice.noopAdvice);
-    		currentConversation = new SimpleConversation();
+    		currentConversation = new SimpleConversation("temp");
     	}
     	currentConversation.add(newMessage);
     }

@@ -268,7 +268,7 @@ public class RedditTestClient {
 
 		// Configure HttpClient, for example:
 		httpClient.setFollowRedirects(false);
-
+		System.out.println("Reddit ID " + System.getenv("REDDIT_ID"));
 		httpClient.getAuthenticationStore()
 				.addAuthentication(new BasicAuthentication(URI.create("https://www.reddit.com/api/v1/access_token"),
 						"reddit", System.getenv("REDDIT_ID"), System.getenv("REDDIT_SECRET")));

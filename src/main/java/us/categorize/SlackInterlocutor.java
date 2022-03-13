@@ -20,10 +20,9 @@ import us.categorize.advice.Advisor;
 import us.categorize.advice.SentimentAdvice;
 import us.categorize.advice.aws.comprehend.ComprehendAdvisor;
 import us.categorize.conversation.slack.SlackMessageEvent;
-import us.categorize.model.Channel;
 import us.categorize.model.Conversation;
 import us.categorize.model.Message;
-import us.categorize.model.simple.SimpleChannel;
+import us.categorize.model.simple.SimpleConversation;
 import us.categorize.model.simple.SimpleCriteria;
 
 //TODO feels like an interface Interlocutor wants to come out here, that listens and responds
@@ -36,7 +35,7 @@ public class SlackInterlocutor {
 		interlocutor.configureSlack();
 	}
 
-	private final Map<String, Channel> id2Channel = new HashMap<>();
+	private final Map<String, SimpleConversation> id2Channel = new HashMap<>();
 	
 	private Advisor advisor = new ComprehendAdvisor();
 
@@ -67,9 +66,9 @@ public class SlackInterlocutor {
 		});
 
 		app.command("/advise", (req, ctx) -> {
-			Channel<SimpleCriteria> channel = id2Channel.get(ctx.getChannelId());
+			Conversation<SimpleCriteria> channel = id2Channel.get(ctx.getChannelId());
 			Conversation conversation = channel.filter(new SimpleCriteria()).get(0);
-			for(us.categorize.model.Message m : conversation.content())
+			for(us.categorize.model.Message m : channel.content())
 				logger.info(m.getText());
 			SentimentAdvice sentiment = advisor.detectSentiment(conversation);
 			return ctx.ack("General Sentiment " + sentiment.getSentiment());
@@ -84,7 +83,7 @@ public class SlackInterlocutor {
 
 	private void listen(String channel, Message message) {
 		if (!id2Channel.containsKey(channel)) {
-			id2Channel.put(channel, new SimpleChannel(channel));
+			id2Channel.put(channel, new SimpleConversation(channel));
 		}
 		id2Channel.get(channel).listen(message);
 	}
