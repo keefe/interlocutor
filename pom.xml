@@ -49,17 +49,18 @@
 			<artifactId>slf4j-api</artifactId>
 			<version>1.7.25</version>
 		</dependency>
+	
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
 			<artifactId>jetty-client</artifactId>
-			<version>11.0.8</version>
+    		<version>9.4.44.v20210927</version>
 		</dependency>
-		<dependency>
+	<!--	<dependency>
 			<groupId>org.eclipse.jetty</groupId>
 			<artifactId>jetty-server</artifactId>
 			<version>11.0.8</version>
 		</dependency>
-
+	-->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
