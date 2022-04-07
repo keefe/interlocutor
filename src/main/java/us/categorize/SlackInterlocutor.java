@@ -96,7 +96,6 @@ public class SlackInterlocutor {
 		    	listen(ctx.getChannelId(), newMessage);
 			}
 			Conversation<SimpleCriteria> channel = id2Channel.get(ctx.getChannelId());
-			//TODO restore live conversation monitoring
 			
 			Conversation conversation = channel.filter(new SimpleCriteria()).get(0);
 			for(us.categorize.model.Message m : channel.content())

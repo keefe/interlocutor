@@ -1,6 +1,6 @@
 package us.categorize.conversation;
 
-import com.slack.api.model.Message;
+import us.categorize.model.Message;
 
 public interface Interlocutor {
 

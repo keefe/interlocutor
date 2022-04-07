@@ -39,5 +39,8 @@ public class SlackMessageEvent implements Message {
 	public long getTimestampSeconds() {
 		return secondsTS;
 	}
-
+	@Override
+	public String getChannel() {
+		return event.getChannel();
+	}
 }

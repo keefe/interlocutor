@@ -2,6 +2,8 @@ package us.categorize.model.simple;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import us.categorize.model.Conversation;
@@ -20,17 +22,19 @@ public class SimpleConversation implements Conversation<SimpleCriteria> {
 	
 	@Override
 	public boolean add(Message message) {
-		if(messages.size()==0 || message.getTimestampSeconds() > messages.get(messages.size()-1).getTimestampSeconds()) {
-			messages.add(message);
-		} else {
-			int where=0; //TODO this is super simple but validate it anyway since it's before 7am
-			for(; where<messages.size();where++) {
-				if(messages.get(where).getTimestampSeconds() > message.getTimestampSeconds()) {
-					break;
-				}
+		Message existing = messages.stream()
+								.filter(m -> m.getId().equals(message.getId()))
+								.findAny()
+								.orElse(null);
+		if(existing!=null) return false;
+		messages.add(message);
+		Collections.sort(messages, new Comparator<Message>() {
+			@Override
+			public int compare(Message m1, Message m2) {
+				//TODO reproduce the subtle bug here
+				return (int) (m1.getTimestampSeconds() - m2.getTimestampSeconds());
 			}
-			messages.add(where, message);
-		}
+		});
 		return true;
 	}
 

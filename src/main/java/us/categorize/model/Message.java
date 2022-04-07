@@ -4,6 +4,7 @@ package us.categorize.model;
 public interface Message {
 	String getId();
 	String getText();
+	String getChannel();
 	User getUser();
 	long getTimestampSeconds();
 }

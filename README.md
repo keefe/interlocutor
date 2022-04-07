@@ -31,12 +31,13 @@ Verification Token
 OAuth Tokens for Your Workspace 
 Save these carefully somewhere.
 3. Install jdk 11, eclipse or intellij
-4. Edit your environment
+4. Edit your environment and create a slack App and AWS account and put credentials somewhere reasonable
 kroeders@kroederss-MacBook-Pro interlocutor % cat ~/.zshenv 
 export SLACK_BOT_TOKEN=
 export SLACK_SIGNING_SECRET=
 export PATH="/usr/local/opt/openjdk@11/bin:$PATH"
 export JAVA_HOME=$(/usr/libexec/java_home)
+
 5. run ngrok to get a temporary URI forwarded to 3000, e.g. 
                                           
 Web Interface                 http://127.0.0.1:4040                                                                                                                    

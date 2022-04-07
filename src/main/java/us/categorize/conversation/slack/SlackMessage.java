@@ -20,7 +20,7 @@ public class SlackMessage implements Message {
 	
 	@Override
 	public String getId() {
-		return slackMessage.getClientMsgId();
+		return slackMessage.getTs();
 	}
 
 	@Override
@@ -36,6 +36,11 @@ public class SlackMessage implements Message {
 	@Override
 	public long getTimestampSeconds() {
 		return secondsTS;
+	}
+
+	@Override
+	public String getChannel() {
+		return slackMessage.getChannel();
 	}
 
 }
