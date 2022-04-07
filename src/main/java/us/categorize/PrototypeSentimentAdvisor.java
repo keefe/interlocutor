@@ -105,7 +105,7 @@ public class PrototypeSentimentAdvisor
 
       	  List<Message> messages = fetchHistory(findConversation(req.getPayload().getChannelName()));
       	  for(Message m : messages) {
-      		addMessage(m);
+      		addMessage(ctx.getChannelId(), m);
       	  }
       	  if("all".equals(req.getPayload().getText())) {
       		  for(us.categorize.model.Conversation c : conversationAdvice.keySet()) {
@@ -154,8 +154,8 @@ public class PrototypeSentimentAdvisor
     	return advice;
     }
     
-    private void addMessage(Message message) {
-    	SlackMessage newMessage = new SlackMessage(message);
+    private void addMessage(String channel, Message message) {
+    	SlackMessage newMessage = new SlackMessage(channel, message);
     	us.categorize.model.Message lastKnown = currentConversation.latest();
     	
     	//this assumes we are getting messages in order and don't need to iterate through past conversations to find the place of a new message

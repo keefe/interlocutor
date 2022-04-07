@@ -11,13 +11,15 @@ public class SlackMessageEvent implements Message {
 	private MessageEvent event;
 	private final SimpleUser user;
 	private final long secondsTS;
+	private final String channel;
 	
-	public SlackMessageEvent(MessageEvent event) {
+	public SlackMessageEvent(String channel, MessageEvent event) {
 		this.event = event;
 		user = new SimpleUser();
 		user.setId(event.getUser());//where did username go?
 		user.setName(event.getUser());
 		secondsTS = (long) Double.parseDouble(event.getTs());
+		this.channel = channel;
 
 	}
 	@Override
@@ -41,6 +43,10 @@ public class SlackMessageEvent implements Message {
 	}
 	@Override
 	public String getChannel() {
-		return event.getChannel();
+		return channel;
+	}
+	@Override
+	public String getRepliesToId() {
+		return event.getThreadTs();
 	}
 }

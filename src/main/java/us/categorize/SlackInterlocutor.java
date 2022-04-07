@@ -41,6 +41,7 @@ import com.slack.api.model.event.MessageEvent;
 import us.categorize.advice.Advisor;
 import us.categorize.advice.SentimentAdvice;
 import us.categorize.advice.aws.comprehend.ComprehendAdvisor;
+import us.categorize.conversation.Interlocutor;
 import us.categorize.conversation.slack.SlackMessage;
 import us.categorize.conversation.slack.SlackMessageEvent;
 import us.categorize.model.Conversation;
@@ -49,7 +50,7 @@ import us.categorize.model.simple.SimpleConversation;
 import us.categorize.model.simple.SimpleCriteria;
 
 //TODO feels like an interface Interlocutor wants to come out here, that listens and responds
-public class SlackInterlocutor {
+public class SlackInterlocutor implements Interlocutor{
 	
 	private Logger logger = LoggerFactory.getLogger(SlackInterlocutor.class);
 	
@@ -84,22 +85,25 @@ public class SlackInterlocutor {
 		app.event(MessageEvent.class, (payload, ctx) -> {
 			// note, when debugging may see repeated posts as it retries
 			System.out.println(payload.getEvent().getText());
-			listen(ctx.getChannelId(), new SlackMessageEvent(payload.getEvent()));
+			listen(new SlackMessageEvent(ctx.getChannelId(), payload.getEvent()));
 			return ctx.ack();
 		});
 
 		app.command("/advise", (req, ctx) -> {
-			List<com.slack.api.model.Message> messages = fetchHistory(ctx.getChannelId());
-			Collections.reverse(messages);
-			for(com.slack.api.model.Message slackMessage : messages) {
-		    	SlackMessage newMessage = new SlackMessage(slackMessage);
-		    	listen(ctx.getChannelId(), newMessage);
+			if("historical".equals(req.getPayload().getText())) {
+				logger.info("Loading History in Channel");
+				List<com.slack.api.model.Message> messages = fetchHistory(ctx.getChannelId());
+				for(com.slack.api.model.Message slackMessage : messages) {
+			    	SlackMessage newMessage = new SlackMessage(ctx.getChannelId(), slackMessage);
+			    	listen(newMessage);
+				}
 			}
 			Conversation<SimpleCriteria> channel = id2Channel.get(ctx.getChannelId());
 			
+			//TODO NPE here with empty convo
 			Conversation conversation = channel.filter(new SimpleCriteria()).get(0);
 			for(us.categorize.model.Message m : channel.content())
-				logger.info(m.getText());
+				logger.info(m.getId() + " | " + m.getText() + " | " + m.getRepliesToId());
 			SentimentAdvice sentiment = advisor.detectSentiment(conversation);
 			return ctx.ack("General Sentiment " + sentiment.getSentiment());
 		});
@@ -109,7 +113,8 @@ public class SlackInterlocutor {
 		server.start();
 	}
 
-	private void listen(String channel, Message message) {
+	public void listen(Message message) {
+		String channel = message.getChannel();
 		if (!id2Channel.containsKey(channel)) {
 			id2Channel.put(channel, new SimpleConversation(channel));
 		}
@@ -134,7 +139,6 @@ public class SlackInterlocutor {
             conversationHistory = Optional.ofNullable(result.getMessages());
             // Print results
             logger.info("{} messages found in {}", conversationHistory.orElse(emptyList()).size(), id);
-            //why isn't logger working?
             
         } catch (IOException | SlackApiException e) {
             logger.error("error: {}", e.getMessage(), e);

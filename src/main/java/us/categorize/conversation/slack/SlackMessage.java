@@ -8,10 +8,12 @@ public class SlackMessage implements Message {
 
 	private final com.slack.api.model.Message slackMessage;
 	private final SimpleUser user;
+	private final String channel;
 	private final long secondsTS;
 	
-	public SlackMessage(com.slack.api.model.Message slackMessage) {
+	public SlackMessage(String channel, com.slack.api.model.Message slackMessage) {
 		this.slackMessage = slackMessage;
+		this.channel = channel;
 		user = new SimpleUser();
 		user.setId(slackMessage.getUser());
 		user.setName(slackMessage.getUsername());
@@ -40,7 +42,14 @@ public class SlackMessage implements Message {
 
 	@Override
 	public String getChannel() {
-		return slackMessage.getChannel();
+		//this getChannel is null for some reason
+		//return slackMessage.getChannel();
+		return channel;
+	}
+
+	@Override
+	public String getRepliesToId() {
+		return slackMessage.getThreadTs();
 	}
 
 }
