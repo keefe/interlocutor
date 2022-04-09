@@ -7,33 +7,18 @@ import static com.slack.api.model.view.Views.view;
 import static java.util.Collections.emptyList;
 
 import java.io.IOException;
-import java.io.Writer;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.servlet.http.HttpServletRequest;
-
-import org.eclipse.jetty.server.ConnectionFactory;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ErrorHandler;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.slack.api.Slack;
 import com.slack.api.bolt.App;
-import com.slack.api.bolt.WebEndpoint;
-import com.slack.api.bolt.handler.WebEndpointHandler;
 import com.slack.api.bolt.jetty.SlackAppServer;
-import com.slack.api.bolt.servlet.SlackAppServlet;
-import com.slack.api.bolt.servlet.SlackOAuthAppServlet;
-import com.slack.api.bolt.servlet.WebEndpointServlet;
 import com.slack.api.methods.SlackApiException;
 import com.slack.api.model.event.AppHomeOpenedEvent;
 import com.slack.api.model.event.MessageEvent;
@@ -126,7 +111,7 @@ public class SlackInterlocutor implements Interlocutor{
      */
     private List<com.slack.api.model.Message> fetchHistory(String id) {
     	var logger = LoggerFactory.getLogger(PrototypeSentimentAdvisor.class);
-    	Optional<List<com.slack.api.model.Message>> conversationHistory = Optional.empty();
+    	List<com.slack.api.model.Message> conversationHistory = new ArrayList<>();
         // you can get this instance via ctx.client() in a Bolt app
         var client = Slack.getInstance().methods();
         try {
@@ -136,15 +121,29 @@ public class SlackInterlocutor implements Interlocutor{
                 .token(System.getenv("SLACK_BOT_TOKEN"))
                 .channel(id)
             );
-            conversationHistory = Optional.ofNullable(result.getMessages());
+
+            if(result.getMessages()!=null) {
+            	conversationHistory.addAll(result.getMessages());
+            }
+
+            for(com.slack.api.model.Message sm : result.getMessages()) {
+            	if(sm.getThreadTs()!=null && sm.getThreadTs().equals(sm.getTs())) {
+            		var repliesResult = client.conversationsReplies(r -> r
+                            // The token you used to initialize your app
+                            .token(System.getenv("SLACK_BOT_TOKEN"))
+                            .ts(sm.getTs())
+                            .channel(id));
+            		conversationHistory.addAll(repliesResult.getMessages());
+            	}
+            }
             // Print results
-            logger.info("{} messages found in {}", conversationHistory.orElse(emptyList()).size(), id);
+            logger.info("{} messages found in {}", conversationHistory.size(), id);
             
         } catch (IOException | SlackApiException e) {
             logger.error("error: {}", e.getMessage(), e);
         }
         
-        return conversationHistory.orElse(emptyList());
+        return conversationHistory;
     }
 }
 
