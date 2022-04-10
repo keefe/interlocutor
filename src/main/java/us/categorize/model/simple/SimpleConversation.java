@@ -59,7 +59,7 @@ public class SimpleConversation implements Conversation<SimpleCriteria> {
 	}
 
 	@Override
-	public List<Conversation> filter(SimpleCriteria criteria) {
+	public List<Conversation<SimpleCriteria>> filter(SimpleCriteria criteria) {
 	    
 		if(criteria==null) {
 	    	return Arrays.asList(this);
@@ -68,7 +68,7 @@ public class SimpleConversation implements Conversation<SimpleCriteria> {
 		//e.g. arraylist implements this different than linkedlist
 		//leaning towards killing the channel abstraction and moving all this 
 		//to conversation
-		Conversation latest = new SimpleConversation(name);
+		SimpleConversation latest = new SimpleConversation(name);
 		for(Message m : content()) {
 			if(latest.latest()!=null && (m.getTimestampSeconds() - latest.latest().getTimestampSeconds()) > criteria.getContinuitySeconds()) {
 				latest = new SimpleConversation(name); //alternatively return full list of convos

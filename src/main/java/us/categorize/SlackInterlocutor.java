@@ -4,14 +4,12 @@ import static com.slack.api.model.block.Blocks.asBlocks;
 import static com.slack.api.model.block.Blocks.section;
 import static com.slack.api.model.block.composition.BlockCompositions.markdownText;
 import static com.slack.api.model.view.Views.view;
-import static java.util.Collections.emptyList;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +44,8 @@ public class SlackInterlocutor implements Interlocutor{
 
 	private final Map<String, SimpleConversation> id2Channel = new HashMap<>();
 	
-	private Advisor advisor = new ComprehendAdvisor();
+	//TODO really don't like how I'm handling generics here
+	private Advisor<SimpleCriteria> advisor = new ComprehendAdvisor<SimpleCriteria>();
 
 	public void configureSlack() throws Exception {
 		var app = new App();
@@ -76,19 +75,17 @@ public class SlackInterlocutor implements Interlocutor{
 
 		app.command("/advise", (req, ctx) -> {
 			if("historical".equals(req.getPayload().getText())) {
-				logger.info("Loading History in Channel");
-				List<com.slack.api.model.Message> messages = fetchHistory(ctx.getChannelId());
-				for(com.slack.api.model.Message slackMessage : messages) {
-			    	SlackMessage newMessage = new SlackMessage(ctx.getChannelId(), slackMessage);
-			    	listen(newMessage);
-				}
+				String channelId = ctx.getChannelId();
+				readChannelHistory(channelId);
 			}
 			Conversation<SimpleCriteria> channel = id2Channel.get(ctx.getChannelId());
 			
 			//TODO NPE here with empty convo
-			Conversation conversation = channel.filter(new SimpleCriteria()).get(0);
+			Conversation<SimpleCriteria> conversation = channel.filter(new SimpleCriteria()).get(0);
 			for(us.categorize.model.Message m : channel.content())
 				logger.info(m.getId() + " | " + m.getText() + " | " + m.getRepliesToId());
+			
+			
 			SentimentAdvice sentiment = advisor.detectSentiment(conversation);
 			return ctx.ack("General Sentiment " + sentiment.getSentiment());
 		});
@@ -96,6 +93,16 @@ public class SlackInterlocutor implements Interlocutor{
 		var server = new SlackAppServer(app);
 		logger.info("Listening to Slack Workspace");
 		server.start();
+	}
+
+	//TODO how to handle pagination parameters here?
+	private void readChannelHistory(String channelId) {
+		logger.info("Loading History in Channel");
+		List<com.slack.api.model.Message> messages = fetchHistory(channelId);
+		for(com.slack.api.model.Message slackMessage : messages) {
+			SlackMessage newMessage = new SlackMessage(channelId, slackMessage);
+			listen(newMessage);
+		}
 	}
 
 	public void listen(Message message) {
@@ -110,7 +117,7 @@ public class SlackInterlocutor implements Interlocutor{
      * Fetch conversation history using ID from last example
      */
     private List<com.slack.api.model.Message> fetchHistory(String id) {
-    	var logger = LoggerFactory.getLogger(PrototypeSentimentAdvisor.class);
+    	var logger = LoggerFactory.getLogger(SlackInterlocutor.class);
     	List<com.slack.api.model.Message> conversationHistory = new ArrayList<>();
         // you can get this instance via ctx.client() in a Bolt app
         var client = Slack.getInstance().methods();

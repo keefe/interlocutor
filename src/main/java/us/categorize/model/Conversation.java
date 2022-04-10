@@ -9,5 +9,5 @@ public interface Conversation<C> {
 	Message latest();
 	String getName();
 	void listen(Message message);
-	List<Conversation> filter(C criteria);
+	List<Conversation<C>> filter(C criteria);
 }
