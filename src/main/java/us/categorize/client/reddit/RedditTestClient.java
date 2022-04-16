@@ -7,6 +7,7 @@ import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.util.BasicAuthentication;
 import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -264,7 +265,7 @@ public class RedditTestClient {
 	// side package, probably need to rationalize what slack vs reddit vs discord is
 	public static void main(String[] args) throws Exception {
 		// Instantiate HttpClient.
-		HttpClient httpClient = new HttpClient();
+		HttpClient httpClient = new HttpClient(new SslContextFactory.Client());
 
 		// Configure HttpClient, for example:
 		httpClient.setFollowRedirects(false);
