@@ -52,4 +52,9 @@ public class SlackMessage implements Message {
 		return slackMessage.getThreadTs();
 	}
 
+	@Override
+	public String getThreadId() {
+		return slackMessage.getThreadTs();
+	}
+
 }

@@ -47,6 +47,11 @@ public class SlackMessageEvent implements Message {
 	}
 	@Override
 	public String getRepliesToId() {
+		//slack events are flat
+		return event.getThreadTs();
+	}
+	@Override
+	public String getThreadId() {
 		return event.getThreadTs();
 	}
 }

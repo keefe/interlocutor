@@ -40,6 +40,7 @@ public class SlackInterlocutor implements Interlocutor{
 	public static void main(String[] args) throws Exception {
 		SlackInterlocutor interlocutor = new SlackInterlocutor();
 		interlocutor.configureSlack();
+		
 	}
 
 	private final Map<String, SimpleConversation> id2Channel = new HashMap<>();
@@ -48,8 +49,8 @@ public class SlackInterlocutor implements Interlocutor{
 	private Advisor<SimpleCriteria> advisor = new ComprehendAdvisor<SimpleCriteria>();
 
 	public void configureSlack() throws Exception {
-		var app = new App();
-
+		App app = new App();
+		
 		app.event(AppHomeOpenedEvent.class, (payload, ctx) -> {
 			var appHomeView = view(view -> view.type("home").blocks(asBlocks(section(section -> section
 					.text(markdownText(mt -> mt.text("*this is where app configuration will go :tada:")))))));
@@ -59,6 +60,7 @@ public class SlackInterlocutor implements Interlocutor{
 			return ctx.ack();
 		});
 
+		
 		app.command("/echo", (req, ctx) -> {
 			String commandArgText = req.getPayload().getText();
 			String channelId = req.getPayload().getChannelId();
@@ -69,6 +71,7 @@ public class SlackInterlocutor implements Interlocutor{
 		app.event(MessageEvent.class, (payload, ctx) -> {
 			// note, when debugging may see repeated posts as it retries
 			System.out.println(payload.getEvent().getText());
+			
 			listen(new SlackMessageEvent(ctx.getChannelId(), payload.getEvent()));
 			return ctx.ack();
 		});
@@ -79,19 +82,35 @@ public class SlackInterlocutor implements Interlocutor{
 				readChannelHistory(channelId);
 			}
 			Conversation<SimpleCriteria> channel = id2Channel.get(ctx.getChannelId());
-			
-			//TODO NPE here with empty convo
-			Conversation<SimpleCriteria> conversation = channel.filter(new SimpleCriteria()).get(0);
 			for(us.categorize.model.Message m : channel.content())
 				logger.info(m.getId() + " | " + m.getText() + " | " + m.getRepliesToId());
-			
-			
-			SentimentAdvice sentiment = advisor.detectSentiment(conversation);
+			SentimentAdvice sentiment = null;
+			for(Conversation<SimpleCriteria> conversation : channel.filter(new SimpleCriteria())) {
+				sentiment = advisor.detectSentiment(conversation);
+			}
+	
 			return ctx.ack("General Sentiment " + sentiment.getSentiment());
 		});
-
+		
+		app.messageShortcut("advise", (req, ctx) ->{
+			readChannelHistory(ctx.getChannelId());
+			System.out.println("I'm in the global shortcut at " + req.getPayload().getMessageTs() + " of " + req.getPayload().getMessage().getThreadTs());
+			SimpleCriteria criteria = new SimpleCriteria();
+			criteria.setThreadId(req.getPayload().getMessage().getThreadTs());
+			Conversation<SimpleCriteria> channel = id2Channel.get(ctx.getChannelId());
+			//TODO NPE again, need to think through this List thing rough and sloppy API at this point
+			List<Conversation<SimpleCriteria>> convos = channel.filter(criteria);
+			Conversation<SimpleCriteria> thread = convos.get(0);
+			for(us.categorize.model.Message m : thread.content()) {
+				logger.info(m.getId() + " | " + m.getText() + " | " + m.getRepliesToId());
+			}
+			SentimentAdvice sentiment = advisor.detectSentiment(thread);
+			ctx.respond("Analysis of Thread \"" + thread.content().get(0).getText() + "\" is " + sentiment.getSentiment());
+			return ctx.ack();
+		});
 		var server = new SlackAppServer(app);
 		logger.info("Listening to Slack Workspace");
+		
 		server.start();
 	}
 

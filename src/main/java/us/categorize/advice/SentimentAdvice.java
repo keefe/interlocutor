@@ -31,7 +31,7 @@ public interface SentimentAdvice {
 		}
 	};
 
-	
+	//in one hand, should at least be enum but then what is the common enum multiple implementations go to?
 	String getSentiment();
 	double getPositive();
 	double getNegative();

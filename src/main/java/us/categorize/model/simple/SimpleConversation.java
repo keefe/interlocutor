@@ -64,16 +64,29 @@ public class SimpleConversation implements Conversation<SimpleCriteria> {
 		if(criteria==null) {
 	    	return Arrays.asList(this);
 	    }
+		
+		//TODO figure out criteria pattern, maybe subclasses of SimpleCriteria?
+		if(criteria.getThreadId()!=null) {
+			SimpleConversation thread = new SimpleConversation(name+"#"+criteria.getThreadId());
+			for(Message m : content()) {
+				if(criteria.getThreadId().equals(m.getThreadId())){
+					thread.add(m);
+				}
+			}
+			return Arrays.asList(thread);
+		}
 	    //since this operation is dependent on the internal structure
 		//e.g. arraylist implements this different than linkedlist
 		//leaning towards killing the channel abstraction and moving all this 
 		//to conversation
 		SimpleConversation latest = new SimpleConversation(name);
 		for(Message m : content()) {
-			if(latest.latest()!=null && (m.getTimestampSeconds() - latest.latest().getTimestampSeconds()) > criteria.getContinuitySeconds()) {
-				latest = new SimpleConversation(name); //alternatively return full list of convos
+			if(m.getThreadId()==null) {
+				if(latest.latest()!=null && (m.getTimestampSeconds() - latest.latest().getTimestampSeconds()) > criteria.getContinuitySeconds()) {
+					latest = new SimpleConversation(name); //alternatively return full list of convos
+				}
+				latest.add(m);				
 			}
-			latest.add(m);
 		}
 		return Arrays.asList(latest);
 	}
