@@ -1,24 +1,24 @@
 package us.categorize.model.simple;
 
 public class SimpleCriteria {
-	//if this many seconds pass, it's a new conversation
-	private int continuitySeconds = 60*10;
-	
-	private String threadId = null;
+  // if this many seconds pass, it's a new conversation
+  private int continuitySeconds = 60 * 10;
 
-	public int getContinuitySeconds() {
-		return continuitySeconds;
-	}
+  private String threadId = null;
 
-	public void setContinuitySeconds(int continuitySeconds) {
-		this.continuitySeconds = continuitySeconds;
-	}
+  public int getContinuitySeconds() {
+    return continuitySeconds;
+  }
 
-	public String getThreadId() {
-		return threadId;
-	}
+  public void setContinuitySeconds(int continuitySeconds) {
+    this.continuitySeconds = continuitySeconds;
+  }
 
-	public void setThreadId(String threadId) {
-		this.threadId = threadId;
-	}
+  public String getThreadId() {
+    return threadId;
+  }
+
+  public void setThreadId(String threadId) {
+    this.threadId = threadId;
+  }
 }
