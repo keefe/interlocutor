@@ -1,7 +1,6 @@
 package us.categorize.advice.aws.comprehend;
 
 import com.amazonaws.services.comprehend.model.DetectSentimentResult;
-
 import us.categorize.advice.SentimentAdvice;
 
 public class ComprehendSentimentAdvice implements SentimentAdvice {

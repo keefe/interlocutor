@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
 import us.categorize.model.Conversation;
 import us.categorize.model.Message;
 
@@ -23,8 +22,9 @@ public class SimpleConversation implements Conversation<SimpleCriteria> {
   public boolean add(Message message) {
     Message existing =
         messages.stream().filter(m -> m.getId().equals(message.getId())).findAny().orElse(null);
-    if (existing != null)
-      return false;
+    if (existing != null) {
+      return false;      
+    }
     messages.add(message);
     Collections.sort(messages, new Comparator<Message>() {
       @Override

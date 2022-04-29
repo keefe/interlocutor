@@ -9,7 +9,7 @@ public class SlackMessage implements Message {
   private final com.slack.api.model.Message slackMessage;
   private final SimpleUser user;
   private final String channel;
-  private final long secondsTS;
+  private final long secondsTimeStamp;
 
   public SlackMessage(String channel, com.slack.api.model.Message slackMessage) {
     this.slackMessage = slackMessage;
@@ -17,7 +17,7 @@ public class SlackMessage implements Message {
     user = new SimpleUser();
     user.setId(slackMessage.getUser());
     user.setName(slackMessage.getUsername());
-    secondsTS = (long) Double.parseDouble(slackMessage.getTs());
+    secondsTimeStamp = (long) Double.parseDouble(slackMessage.getTs());
   }
 
   @Override
@@ -37,7 +37,7 @@ public class SlackMessage implements Message {
 
   @Override
   public long getTimestampSeconds() {
-    return secondsTS;
+    return secondsTimeStamp;
   }
 
   @Override

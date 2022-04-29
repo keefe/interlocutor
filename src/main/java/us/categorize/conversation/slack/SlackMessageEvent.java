@@ -9,15 +9,15 @@ public class SlackMessageEvent implements Message {
 
   private MessageEvent event;
   private final SimpleUser user;
-  private final long secondsTS;
+  private final long secondsTimestamp;
   private final String channel;
 
   public SlackMessageEvent(String channel, MessageEvent event) {
     this.event = event;
     user = new SimpleUser();
-    user.setId(event.getUser());// where did username go?
+    user.setId(event.getUser()); // where did username go?
     user.setName(event.getUser());
-    secondsTS = (long) Double.parseDouble(event.getTs());
+    secondsTimestamp = (long) Double.parseDouble(event.getTs());
     this.channel = channel;
 
   }
@@ -39,7 +39,7 @@ public class SlackMessageEvent implements Message {
 
   @Override
   public long getTimestampSeconds() {
-    return secondsTS;
+    return secondsTimestamp;
   }
 
   @Override

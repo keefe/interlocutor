@@ -80,8 +80,10 @@ public class SlackInterlocutor implements Interlocutor {
         readChannelHistory(channelId);
       }
       Conversation<SimpleCriteria> channel = id2Channel.get(ctx.getChannelId());
-      for (us.categorize.model.Message m : channel.content())
+      for (us.categorize.model.Message m : channel.content()) {
         logger.info(m.getId() + " | " + m.getText() + " | " + m.getRepliesToId());
+      }
+
       SentimentAdvice sentiment = null;
       for (Conversation<SimpleCriteria> conversation : channel.filter(new SimpleCriteria())) {
         sentiment = advisor.detectSentiment(conversation);
@@ -133,7 +135,7 @@ public class SlackInterlocutor implements Interlocutor {
   }
 
   /**
-   * Fetch conversation history using ID from last example
+   * Fetch conversation history using ID from last example.
    */
   private List<com.slack.api.model.Message> fetchHistory(String id) {
     var logger = LoggerFactory.getLogger(SlackInterlocutor.class);
